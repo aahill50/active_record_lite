@@ -88,18 +88,40 @@ class SQLObject
   end
 
   def attribute_values
-    # ...
+    self.class.columns.map { |col| attributes[col] }
   end
 
   def insert
-    # ...
+    col_names = self.attributes.keys.join(",")
+    attrs = attribute_values.reject { |attr| attr.nil? }
+    question_marks = ("?," * attrs.length).chop
+
+    DBConnection.execute(<<-SQL, *attrs)
+    INSERT INTO
+      #{self.class.table_name} (#{col_names})
+    VALUES
+      (#{question_marks})
+    SQL
+
+    self.id = DBConnection.last_insert_row_id
   end
 
   def update
-    # ...
+    col_names = self.attributes.keys.map(&:to_s)
+    attrs = attribute_values.reject { |attr| attr.nil? }
+    col_names = col_names.map { |col| "#{col} = ?" }.join(",")
+
+    DBConnection.execute(<<-SQL, *attrs, id)
+    UPDATE
+      #{self.class.table_name}
+    SET
+      #{col_names}
+    WHERE
+      id = ?
+    SQL
   end
 
   def save
-    # ...
+    self.id.nil? ? self.insert : self.update
   end
 end
