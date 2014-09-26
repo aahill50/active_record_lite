@@ -52,9 +52,7 @@ class SQLObject
   end
 
   def self.parse_all(results)
-    results.map do |result|
-      self.new(result)
-    end
+    results.map { |result|  self.new(result) }
   end
 
   def self.find(id)
@@ -88,7 +86,7 @@ class SQLObject
   end
 
   def attribute_values
-    self.class.columns.map { |col| attributes[col] }
+    self.class.columns.map { |col| self.send(col) }
   end
 
   def insert
